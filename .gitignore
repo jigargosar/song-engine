@@ -24,3 +24,4 @@ elm-stuff
 
 # Temp
 tmp/
+*.local.json
