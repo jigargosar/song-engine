@@ -1,1 +1,103 @@
-@import "tailwindcss";
+@import 'tailwindcss';
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #0a0a12;
+    color: #c8c8e0;
+    font-family: monospace;
+    padding: 24px;
+}
+
+h2 {
+    color: #a080d0;
+    margin-bottom: 16px;
+    font-size: 18px;
+}
+
+button {
+    padding: 10px 24px;
+    background: #2a1848;
+    color: #c8b0f0;
+    border: 1px solid #4a2878;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 14px;
+    cursor: pointer;
+    margin-right: 8px;
+}
+
+button:hover {
+    background: #3a2060;
+}
+
+button:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.controls label {
+    font-size: 12px;
+    color: #8878a8;
+}
+
+.controls input[type='text'] {
+    background: #1a1830;
+    color: #c8c8e0;
+    border: 1px solid #2a2848;
+    border-radius: 3px;
+    padding: 6px 10px;
+    font-family: monospace;
+    font-size: 13px;
+    width: 100px;
+}
+
+#status {
+    color: #8070a0;
+    font-size: 13px;
+    margin-bottom: 16px;
+    min-height: 18px;
+    padding: 8px 12px;
+    background: #0e0e1a;
+    border: 1px solid #1a1a30;
+    border-radius: 4px;
+}
+
+#log {
+    background: #0e0e1a;
+    border: 1px solid #1a1a30;
+    border-radius: 4px;
+    padding: 12px;
+    font-size: 11px;
+    white-space: pre;
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.bar-line {
+    padding: 2px 4px;
+    border-radius: 2px;
+}
+
+.bar-line.active {
+    background: #2a1848;
+    color: #e0c0ff;
+}
+
+.section-header {
+    color: #6a50a0;
+    padding: 4px 4px 2px;
+    font-weight: bold;
+}
