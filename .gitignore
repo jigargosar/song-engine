@@ -21,3 +21,6 @@ dist
 
 # Elm
 elm-stuff
+
+# Temp
+tmp/
