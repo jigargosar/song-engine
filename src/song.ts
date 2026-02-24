@@ -1,4 +1,5 @@
 import { type Seed, createRng } from './rng'
+import { NonEmpty } from './NonEmpty'
 import { NoteName, ChordSymbol, noteToMidi, midiToNote, MidiNumber } from './note'
 import type { NoteEvent, PadEvent } from './note'
 import { generatePhrase } from './markov'
@@ -73,7 +74,7 @@ const STRUCTURE_NAMES = [
     'Epic',
 ] as const
 
-const KEY_POOL = ['C', 'D', 'E', 'F', 'G', 'A'] as const
+const KEY_POOL: NonEmpty<NoteName> = NonEmpty.init(['C', 'D', 'E', 'F', 'G', 'A']).map(NoteName)
 const VOICE_RANGE: [string, string] = ['C3', 'C5']
 const MIN_VEL = 0.03
 
@@ -181,7 +182,7 @@ export function generateSong(seed: Seed): Song {
 
     const scaleNotes = Scale.get(`${tonic} minor`).notes
     const arpStyle = rng.pick(ARP_STYLES)
-    const motifLen = rng.pick([4, 5, 6, 8] as const)
+    const motifLen = rng.pick(NonEmpty.init([4, 5, 6, 8]))
     const baseMotif = createMotif(rng, scaleNotes.length, motifLen)
     const melodyRhythm = createRhythm(rng, motifLen)
     const drumVariants = {
@@ -274,11 +275,11 @@ export function generateSong(seed: Seed): Song {
                     vel: vols.bass,
                 })
             } else {
-                const chordMidis = bar.voiced.map(
-                    (n) => (noteToMidi(n) as number) - 12,
+                const chordMidis = NonEmpty.fromArray(
+                    bar.voiced.map((n) => (noteToMidi(n) as number) - 12),
                 )
                 for (let step = 0; step < 8; step++) {
-                    if (rng.next() < 0.7) {
+                    if (chordMidis !== null && rng.next() < 0.7) {
                         const midi = rng.pick(chordMidis)
                         bassEvents.push({
                             time: barTime + step * stepSec,
@@ -318,10 +319,10 @@ export function generateSong(seed: Seed): Song {
 
         // Arp
         if (vols.arp > MIN_VEL) {
-            const arpNotes = bar.voiced.map((n) =>
-                midiToNote(MidiNumber((noteToMidi(n) as number) + 12)),
+            const arpNotes = NonEmpty.fromArray(
+                bar.voiced.map((n) => midiToNote(MidiNumber((noteToMidi(n) as number) + 12))),
             )
-            arpEvents.push(
+            if (arpNotes !== null) arpEvents.push(
                 ...generateArpEvents(
                     rng,
                     arpNotes,

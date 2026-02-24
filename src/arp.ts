@@ -1,12 +1,13 @@
 import type { Rng } from './rng'
 import type { NoteName, NoteEvent } from './note'
+import { NonEmpty } from './NonEmpty'
 
 export type ArpStyle = 'up' | 'down' | 'updown' | 'random'
-export const ARP_STYLES: readonly ArpStyle[] = ['up', 'down', 'updown', 'random'] as const
+export const ARP_STYLES: NonEmpty<ArpStyle> = NonEmpty.init(['up', 'down', 'updown', 'random'])
 
 export function generateArpEvents(
     rng: Rng,
-    chordNotes: readonly NoteName[],
+    chordNotes: NonEmpty<NoteName>,
     style: ArpStyle,
     energy: number,
     vel: number,
@@ -14,8 +15,8 @@ export function generateArpEvents(
     stepDuration: number,
 ): NoteEvent[] {
     const events: NoteEvent[] = []
-    const len = chordNotes.length
-    if (len === 0) return events
+    const notes = chordNotes.toArray()
+    const len = notes.length
 
     for (let step = 0; step < 8; step++) {
         if (rng.next() > 0.2 + energy * 0.5) continue
@@ -41,7 +42,7 @@ export function generateArpEvents(
 
         events.push({
             time: barTime + step * stepDuration,
-            note: chordNotes[Math.min(idx, len - 1)],
+            note: notes[Math.min(idx, len - 1)] ?? chordNotes.head,
             duration: stepDuration * 0.5,
             vel,
         })
