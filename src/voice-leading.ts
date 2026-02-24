@@ -6,21 +6,19 @@ export function closestVoicing(
     reference: readonly NoteName[],
 ): NoteName[] {
     if (candidates.length === 0) return []
-    if (reference.length === 0) return [...candidates[0]]
+
+    const first = candidates[0]
+    if (first === undefined) return []
+    if (reference.length === 0) return [...first]
 
     const movement = (voicing: readonly NoteName[]): number =>
         voicing.reduce((sum, note, i) => {
-            const prev =
-                i < reference.length
-                    ? reference[i]
-                    : reference[reference.length - 1]
-            return (
-                sum +
-                Math.abs(
-                    (noteToMidi(note) as number) - (noteToMidi(prev) as number),
-                )
-            )
+            const ref = reference[Math.min(i, reference.length - 1)]
+            if (ref === undefined) return sum
+            return sum + Math.abs(noteToMidi(note) - noteToMidi(ref))
         }, 0)
 
-    return [...candidates.slice().sort((a, b) => movement(a) - movement(b))[0]]
+    const sorted = candidates.slice().sort((a, b) => movement(a) - movement(b))
+    const best = sorted[0]
+    return best !== undefined ? [...best] : []
 }

@@ -1,10 +1,11 @@
 import seedrandom from 'seedrandom'
 import type { Brand } from './brand'
-import type { NonEmpty } from './NonEmpty'
+import { brand } from './brand'
+import { NonEmpty } from './NonEmpty'
 
 export type Seed = Brand<number, 'Seed'>
 export function Seed(n: number): Seed {
-    return n as Seed
+    return brand<Seed>(n)
 }
 
 export interface Rng {
@@ -21,8 +22,8 @@ export function createRng(seed: Seed): Rng {
             return min + Math.floor(prng() * (max - min + 1))
         },
         pick(arr) {
-            const all = arr.toArray()
-            return all[Math.floor(prng() * all.length)] ?? arr.head
+            const all = NonEmpty.toArray(arr)
+            return all[Math.floor(prng() * all.length)] ?? NonEmpty.head(arr)
         },
 
     }

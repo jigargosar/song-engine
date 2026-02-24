@@ -57,8 +57,8 @@ export function buildEnergyCurve(
     // 3-pass neighbor averaging for smooth transitions
     function smooth(arr: readonly number[]): number[] {
         return arr.map((e, i) => {
-            const prev = i > 0 ? arr[i - 1] : e
-            const next = i < arr.length - 1 ? arr[i + 1] : e
+            const prev = arr[i - 1] ?? e
+            const next = arr[i + 1] ?? e
             return prev * 0.15 + e * 0.7 + next * 0.15
         })
     }
@@ -74,8 +74,8 @@ export function buildEnergyCurve(
         const fi = Math.floor(i * 0.5)
         const frac = i * 0.5 - fi
         const t = frac * frac * (3 - 2 * frac) // smoothstep
-        const a = noise[Math.min(fi, noise.length - 1)]
-        const b = noise[Math.min(fi + 1, noise.length - 1)]
+        const a = noise[Math.min(fi, noise.length - 1)] ?? 0.5
+        const b = noise[Math.min(fi + 1, noise.length - 1)] ?? 0.5
         const n = (a + (b - a) * t - 0.5) * 0.1
         return Math.max(0.01, Math.min(1, e + n))
     })
@@ -87,18 +87,24 @@ export function computeVolumes(
     energy: number,
     ordering: readonly InstrumentName[],
 ): InstrumentVolumes {
-    const vols = {} as Record<InstrumentName, number>
+    const vols: InstrumentVolumes = {
+        pad: 0, bass: 0, kick: 0, snare: 0, hat: 0, arp: 0, melody: 0,
+    }
     for (let i = 0; i < ordering.length; i++) {
-        vols[ordering[i]] = sigmoid(
-            (energy - SLOT_THRESHOLDS[i]) / SLOT_SMOOTHNESS[i],
-        )
+        const name = ordering[i]
+        const threshold = SLOT_THRESHOLDS[i]
+        const smoothness = SLOT_SMOOTHNESS[i]
+        if (name !== undefined && threshold !== undefined && smoothness !== undefined) {
+            vols[name] = sigmoid((energy - threshold) / smoothness)
+        }
     }
     return vols
 }
 
+const ALL_INSTRUMENTS: readonly InstrumentName[] = ['pad', 'bass', 'kick', 'snare', 'hat', 'arp', 'melody']
+
 export function dominantInstruments(vols: InstrumentVolumes): InstrumentName[] {
-    return (Object.entries(vols) as [InstrumentName, number][])
-        .filter(([, v]) => v > 0.5)
-        .sort((a, b) => b[1] - a[1])
-        .map(([name]) => name)
+    return ALL_INSTRUMENTS
+        .filter((name) => vols[name] > 0.5)
+        .sort((a, b) => vols[b] - vols[a])
 }

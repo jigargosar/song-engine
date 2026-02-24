@@ -1,14 +1,15 @@
 import type { Rng } from './rng'
 import type { Brand } from './brand'
+import { brand } from './brand'
 
 export type Bpm = Brand<number, 'Bpm'>
 export function Bpm(n: number): Bpm {
-    return n as Bpm
+    return brand<Bpm>(n)
 }
 
 export type Seconds = Brand<number, 'Seconds'>
 export function Seconds(n: number): Seconds {
-    return n as Seconds
+    return brand<Seconds>(n)
 }
 
 export interface BarTiming {
@@ -23,7 +24,7 @@ export function buildBpmCurve(
     center: Bpm,
     range: number,
 ): Bpm[] {
-    const baseBpm = Math.round((center as number) + (rng.next() - 0.5) * range)
+    const baseBpm = Math.round(center + (rng.next() - 0.5) * range)
     const curve: Bpm[] = []
 
     for (const bars of sectionBars) {
@@ -45,7 +46,7 @@ export function buildBarTiming(bpmCurve: readonly Bpm[]): BarTiming {
     let t = 0
 
     for (const bpm of bpmCurve) {
-        const beatSec = 60 / (bpm as number)
+        const beatSec = 60 / bpm
         const barSec = beatSec * 4
         barStartTimes.push(Seconds(t))
         barDurations.push(Seconds(barSec))

@@ -13,12 +13,18 @@ interface MotifImpl extends Motif {
     readonly degrees: readonly number[]
 }
 
-function toImpl(motif: Motif): MotifImpl {
-    return motif as MotifImpl
+function isMotifImpl(m: Motif): m is MotifImpl {
+    return 'degrees' in m
+}
+
+function toImpl(m: Motif): MotifImpl {
+    if (!isMotifImpl(m)) throw new Error('Invalid motif')
+    return m
 }
 
 function motif(degrees: readonly number[]): Motif {
-    return { _tag: 'Motif', length: degrees.length, degrees } as MotifImpl
+    const impl: MotifImpl = { _tag: 'Motif', length: degrees.length, degrees }
+    return impl
 }
 
 // --- MelodyRhythm ---
@@ -69,7 +75,8 @@ function degreeToNote(
     const len = scaleNotes.length
     const oct = Math.floor(degree / len)
     const idx = ((degree % len) + len) % len
-    return NoteName(scaleNotes[idx] + (octaveBase + oct))
+    const note = scaleNotes[idx] ?? 'C'
+    return NoteName(note + (octaveBase + oct))
 }
 
 export function motifToEvents(
@@ -94,7 +101,9 @@ export function motifToEvents(
         if (!rhythm.pattern[motifIdx]) continue
         if (rng.next() > 0.4 + energy * 0.4) continue
 
-        const note = degreeToNote(scaleNotes, impl.degrees[motifIdx], octave)
+        const degree = impl.degrees[motifIdx]
+        if (degree === undefined) continue
+        const note = degreeToNote(scaleNotes, degree, octave)
         events.push({
             time: barTime + step * stepDuration,
             note,

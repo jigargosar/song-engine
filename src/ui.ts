@@ -27,7 +27,7 @@ export function buildLogEntries(song: Song): LogEntry[] {
         const active = dominantInstruments(vols).join(' ')
         const eBar =
             '\u2588'.repeat(Math.round(bar.energy * 10)).padEnd(10, '\u2591')
-        const text = `Bar ${String(bar.bar).padStart(2)}: ${eBar} ${String(bar.bpm).padStart(3)}bpm ${(bar.numeral as string).padEnd(5)} ${(bar.chordSymbol as string).padEnd(6)} ${active}`
+        const text = `Bar ${String(bar.bar).padStart(2)}: ${eBar} ${String(bar.bpm).padStart(3)}bpm ${bar.numeral.padEnd(5)} ${bar.chordSymbol.padEnd(6)} ${active}`
 
         entries.push({ type: 'bar-line', text })
     }
@@ -42,8 +42,8 @@ export interface BarElements {
 }
 
 export function renderSongHeader(container: HTMLElement, song: Song): void {
-    const bpmMin = Math.min(...song.bpmCurve.map((b) => b as number))
-    const bpmMax = Math.max(...song.bpmCurve.map((b) => b as number))
+    const bpmMin = Math.min(...song.bpmCurve)
+    const bpmMax = Math.max(...song.bpmCurve)
 
     const lines = [
         `Seed: ${song.seed}`,
@@ -93,6 +93,7 @@ export function highlightBar(
 ): void {
     for (let i = 0; i < barElements.elements.length; i++) {
         const el = barElements.elements[i]
+        if (el === undefined) continue
         if (i === activeIndex) {
             el.classList.add('active')
             el.scrollIntoView({ block: 'nearest' })

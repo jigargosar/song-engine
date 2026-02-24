@@ -1,29 +1,30 @@
 import { Note } from 'tonal'
 import type { Brand } from './brand'
+import { brand } from './brand'
 
 export type NoteName = Brand<string, 'NoteName'>
 export function NoteName(s: string): NoteName {
-    return s as NoteName
+    return brand<NoteName>(s)
 }
 
 export type MidiNumber = Brand<number, 'MidiNumber'>
 export function MidiNumber(n: number): MidiNumber {
-    return n as MidiNumber
+    return brand<MidiNumber>(n)
 }
 
 export type ChordSymbol = Brand<string, 'ChordSymbol'>
 export function ChordSymbol(s: string): ChordSymbol {
-    return s as ChordSymbol
+    return brand<ChordSymbol>(s)
 }
 
 export function noteToMidi(note: NoteName): MidiNumber {
-    const midi = Note.midi(note as string)
+    const midi = Note.midi(note)
     if (midi === null) throw new Error(`Invalid note: ${note}`)
     return MidiNumber(midi)
 }
 
 export function midiToNote(midi: MidiNumber): NoteName {
-    return NoteName(Note.fromMidi(midi as number))
+    return NoteName(Note.fromMidi(midi))
 }
 
 export interface NoteEvent {

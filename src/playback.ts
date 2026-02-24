@@ -113,67 +113,60 @@ export async function startPlayback(
     const parts: Tone.Part[] = []
 
     if (song.padEvents.length > 0) {
-        const p = new Tone.Part((time, value) => {
-            const e = value as unknown as PadEvent
+        const p = new Tone.Part((time, value: PadEvent) => {
             pad.triggerAttackRelease(
-                e.notes.map((n) => n as string),
-                e.duration, time, e.vel,
+                [...value.notes],
+                value.duration, time, value.vel,
             )
-        }, song.padEvents.map((e) => [e.time, e]))
+        }, [...song.padEvents])
         p.start(0)
         parts.push(p)
     }
 
     if (song.bassEvents.length > 0) {
-        const p = new Tone.Part((time, value) => {
-            const e = value as unknown as NoteEvent
-            bass.triggerAttackRelease(e.note as string, e.duration, time, e.vel)
-        }, song.bassEvents.map((e) => [e.time, e]))
+        const p = new Tone.Part((time, value: NoteEvent) => {
+            bass.triggerAttackRelease(value.note, value.duration, time, value.vel)
+        }, [...song.bassEvents])
         p.start(0)
         parts.push(p)
     }
 
     if (song.kickEvents.length > 0) {
-        const p = new Tone.Part((time, value) => {
-            const e = value as unknown as DrumEvent
-            kick.triggerAttackRelease('C1', '8n', time, e.vel)
-        }, song.kickEvents.map((e) => [e.time, e]))
+        const p = new Tone.Part((time, value: DrumEvent) => {
+            kick.triggerAttackRelease('C1', '8n', time, value.vel)
+        }, [...song.kickEvents])
         p.start(0)
         parts.push(p)
     }
 
     if (song.snareEvents.length > 0) {
-        const p = new Tone.Part((time, value) => {
-            const e = value as unknown as DrumEvent
-            snare.triggerAttackRelease('16n', time, e.vel)
-        }, song.snareEvents.map((e) => [e.time, e]))
+        const p = new Tone.Part((time, value: DrumEvent) => {
+            snare.triggerAttackRelease('16n', time, value.vel)
+        }, [...song.snareEvents])
         p.start(0)
         parts.push(p)
     }
 
     if (song.hatEvents.length > 0) {
-        const p = new Tone.Part((time, value) => {
-            const e = value as unknown as DrumEvent
-            hat.triggerAttackRelease('32n', time, e.vel)
-        }, song.hatEvents.map((e) => [e.time, e]))
+        const p = new Tone.Part((time, value: DrumEvent) => {
+            hat.triggerAttackRelease('32n', time, value.vel)
+        }, [...song.hatEvents])
         p.start(0)
         parts.push(p)
     }
 
     if (song.arpEvents.length > 0) {
-        const p = new Tone.Part((time, value) => {
-            const e = value as unknown as NoteEvent
-            arp.triggerAttackRelease(e.note as string, e.duration, time, e.vel)
-        }, song.arpEvents.map((e) => [e.time, e]))
+        const p = new Tone.Part((time, value: NoteEvent) => {
+            arp.triggerAttackRelease(value.note, value.duration, time, value.vel)
+        }, [...song.arpEvents])
         p.start(0)
         parts.push(p)
     }
 
     if (song.melodyEvents.length > 0) {
-        const p = new Tone.Part((time, value) => {
-            const e = value as unknown as NoteEvent
-            melodySynth.triggerAttackRelease(e.note as string, e.duration, time, e.vel)
-        }, song.melodyEvents.map((e) => [e.time, e]))
+        const p = new Tone.Part((time, value: NoteEvent) => {
+            melodySynth.triggerAttackRelease(value.note, value.duration, time, value.vel)
+        }, [...song.melodyEvents])
         p.start(0)
         parts.push(p)
     }
@@ -181,25 +174,30 @@ export async function startPlayback(
     // Bar highlighting
     for (let i = 0; i < song.totalBars; i++) {
         const barIdx = i
-        transport.schedule((time) => {
-            Tone.getDraw().schedule(() => {
-                callbacks.onBarChange(barIdx)
-            }, time)
-        }, song.barStartTimes[i] as number)
+        const startTime = song.barStartTimes[i]
+        if (startTime !== undefined) {
+            transport.schedule((time) => {
+                Tone.getDraw().schedule(() => {
+                    callbacks.onBarChange(barIdx)
+                }, time)
+            }, startTime)
+        }
     }
 
     // Master fade on last bar
-    const lastBarDur = song.barDurations[song.totalBars - 1] as number
-    const fadeStart = (song.totalTime as number) - lastBarDur
-    transport.schedule((time) => {
-        masterGain.gain.setValueAtTime(1, time)
-        masterGain.gain.linearRampToValueAtTime(0, time + lastBarDur)
-    }, fadeStart)
+    const lastBarDur = song.barDurations[song.totalBars - 1]
+    if (lastBarDur !== undefined) {
+        const fadeStart = song.totalTime - lastBarDur
+        transport.schedule((time) => {
+            masterGain.gain.setValueAtTime(1, time)
+            masterGain.gain.linearRampToValueAtTime(0, time + lastBarDur)
+        }, fadeStart)
+    }
 
     transport.schedule(() => {
         dispose()
         callbacks.onComplete()
-    }, (song.totalTime as number) + 1.5)
+    }, song.totalTime + 1.5)
 
     transport.bpm.value = 128
     transport.start()

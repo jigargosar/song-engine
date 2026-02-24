@@ -15,7 +15,7 @@ export function generateArpEvents(
     stepDuration: number,
 ): NoteEvent[] {
     const events: NoteEvent[] = []
-    const notes = chordNotes.toArray()
+    const notes = NonEmpty.toArray(chordNotes)
     const len = notes.length
 
     for (let step = 0; step < 8; step++) {
@@ -42,7 +42,7 @@ export function generateArpEvents(
 
         events.push({
             time: barTime + step * stepDuration,
-            note: notes[Math.min(idx, len - 1)] ?? chordNotes.head,
+            note: notes[Math.min(idx, len - 1)] ?? NonEmpty.head(chordNotes),
             duration: stepDuration * 0.5,
             vel,
         })

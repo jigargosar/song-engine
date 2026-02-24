@@ -1,9 +1,10 @@
 import type { Rng } from './rng'
 import type { Brand } from './brand'
+import { brand } from './brand'
 
 export type RomanNumeral = Brand<string, 'RomanNumeral'>
 export function RomanNumeral(s: string): RomanNumeral {
-    return s as RomanNumeral
+    return brand<RomanNumeral>(s)
 }
 
 type Transition = readonly [string, number]
@@ -19,17 +20,22 @@ const TRANSITIONS: Record<string, readonly Transition[]> = {
 
 function markovNext(rng: Rng, current: string): string {
     const transitions = TRANSITIONS[current]
+    if (transitions === undefined) return current
     const totalWeight = transitions.reduce((sum, [, w]) => sum + w, 0)
     let r = rng.next() * totalWeight
     for (const [target, weight] of transitions) {
         r -= weight
         if (r <= 0) return target
     }
-    return transitions[transitions.length - 1][0]
+    const last = transitions[transitions.length - 1]
+    return last !== undefined ? last[0] : current
 }
 
 export function generatePhrase(rng: Rng): RomanNumeral[] {
     const walk: string[] = ['Im']
-    for (let i = 1; i < 4; i++) walk.push(markovNext(rng, walk[i - 1]))
+    for (let i = 1; i < 4; i++) {
+        const prev = walk[i - 1]
+        if (prev !== undefined) walk.push(markovNext(rng, prev))
+    }
     return walk.map(RomanNumeral)
 }

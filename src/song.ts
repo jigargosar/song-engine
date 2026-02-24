@@ -74,7 +74,7 @@ const STRUCTURE_NAMES = [
     'Epic',
 ] as const
 
-const KEY_POOL: NonEmpty<NoteName> = NonEmpty.init(['C', 'D', 'E', 'F', 'G', 'A']).map(NoteName)
+const KEY_POOL: NonEmpty<NoteName> = NonEmpty.map(NoteName, NonEmpty.init(['C', 'D', 'E', 'F', 'G', 'A']))
 const VOICE_RANGE: [string, string] = ['C3', 'C5']
 const MIN_VEL = 0.03
 
@@ -119,7 +119,10 @@ export interface Song {
 
 function dedup<T extends { time: number }>(events: T[]): T[] {
     const sorted = [...events].sort((a, b) => a.time - b.time)
-    return sorted.filter((e, i) => i === 0 || e.time > sorted[i - 1].time)
+    return sorted.filter((e, i) => {
+        const prev = sorted[i - 1]
+        return i === 0 || (prev !== undefined && e.time > prev.time)
+    })
 }
 
 function voiceChords(
@@ -140,7 +143,7 @@ function voiceChords(
                 dictionary,
                 VoiceLeading.topNoteDiff,
                 lastVoicing.length > 0
-                    ? lastVoicing.map((n) => n as string)
+                    ? [...lastVoicing]
                     : undefined,
             )
             const voiced = v.map(NoteName)
@@ -167,15 +170,19 @@ export function generateSong(seed: Seed): Song {
     const structIdx = Math.floor(rng.next() * STRUCTURES.length)
     const structure = STRUCTURES[structIdx]
     const structName = STRUCTURE_NAMES[structIdx]
+    if (structure === undefined || structName === undefined)
+        throw new Error('Invalid structure index')
 
     const orderIdx = Math.floor(rng.next() * ORDERINGS.length)
     const ordering = ORDERINGS[orderIdx]
     const orderName = ORDERING_NAMES[orderIdx]
+    if (ordering === undefined || orderName === undefined)
+        throw new Error('Invalid ordering index')
 
     const phrase = generatePhrase(rng)
     const rawChords = Progression.fromRomanNumerals(
         tonic,
-        phrase.map((r) => r as string),
+        [...phrase],
     )
     const chordSymbols = rawChords.map(ChordSymbol)
     const phraseVoicings = voiceChords(rawChords, [])
@@ -201,14 +208,29 @@ export function generateSong(seed: Seed): Song {
     const bars: BarData[] = []
     for (let i = 0; i < totalBars; i++) {
         const phraseIdx = i % 4
+        const section = sectionNames[i]
+        const energy = energyCurve[i]
+        const bpm = bpmCurve[i]
+        const chord = chordSymbols[phraseIdx]
+        const numeral = phrase[phraseIdx]
+        const voiced = phraseVoicings[phraseIdx]
+        if (
+            section === undefined ||
+            energy === undefined ||
+            bpm === undefined ||
+            chord === undefined ||
+            numeral === undefined ||
+            voiced === undefined
+        )
+            continue
         bars.push({
             bar: i,
-            section: sectionNames[i],
-            energy: energyCurve[i],
-            bpm: bpmCurve[i],
-            chordSymbol: chordSymbols[phraseIdx],
-            numeral: phrase[phraseIdx],
-            voiced: phraseVoicings[phraseIdx],
+            section,
+            energy,
+            bpm,
+            chordSymbol: chord,
+            numeral,
+            voiced,
         })
     }
 
@@ -226,16 +248,16 @@ export function generateSong(seed: Seed): Song {
     let melodyStepCounter = 0
 
     for (const bar of bars) {
-        const barTime = barStartTimes[bar.bar] as number
-        const barSec = barDurations[bar.bar] as number
+        const barTime = barStartTimes[bar.bar]
+        const barSec = barDurations[bar.bar]
+        if (barTime === undefined || barSec === undefined) continue
         const beatSec = barSec / 4
         const stepSec = beatSec / 2
         const energy = bar.energy
         const level = energyLevel(energy)
         const vols = computeVolumes(energy, ordering)
 
-        const nextEnergy =
-            bar.bar < totalBars - 1 ? energyCurve[bar.bar + 1] : energy
+        const nextEnergy = energyCurve[bar.bar + 1] ?? energy
         const isTransition = Math.abs(nextEnergy - energy) > 0.06
         const isPhraseLast = (bar.bar + 1) % 4 === 0
 
@@ -251,7 +273,9 @@ export function generateSong(seed: Seed): Song {
 
         // Bass
         if (vols.bass > MIN_VEL) {
-            const rootMidi = noteToMidi(bar.voiced[0]) as number
+            const rootVoiced = bar.voiced[0]
+            if (rootVoiced === undefined) continue
+            const rootMidi = noteToMidi(rootVoiced)
             const bassNote = midiToNote(MidiNumber(rootMidi - 12))
 
             if (energy < 0.4) {
@@ -276,7 +300,7 @@ export function generateSong(seed: Seed): Song {
                 })
             } else {
                 const chordMidis = NonEmpty.fromArray(
-                    bar.voiced.map((n) => (noteToMidi(n) as number) - 12),
+                    bar.voiced.map((n) => noteToMidi(n) - 12),
                 )
                 for (let step = 0; step < 8; step++) {
                     if (chordMidis !== null && rng.next() < 0.7) {
@@ -320,7 +344,7 @@ export function generateSong(seed: Seed): Song {
         // Arp
         if (vols.arp > MIN_VEL) {
             const arpNotes = NonEmpty.fromArray(
-                bar.voiced.map((n) => midiToNote(MidiNumber((noteToMidi(n) as number) + 12))),
+                bar.voiced.map((n) => midiToNote(MidiNumber(noteToMidi(n) + 12))),
             )
             if (arpNotes !== null) arpEvents.push(
                 ...generateArpEvents(

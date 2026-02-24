@@ -39,14 +39,16 @@ const HAT: Record<EnergyLevel, readonly DrumPattern[]> = {
     peak: [[1,1,1,1, 1,1,1,1], [1,1,1,1, 1,0,1,1], [1,0,1,1, 1,1,1,0]],
 }
 
+const SILENT: DrumPattern = [0, 0, 0, 0, 0, 0, 0, 0]
+
 export function selectKickPattern(level: EnergyLevel, variant: number): DrumPattern {
-    return KICK[level][variant % KICK[level].length]
+    return KICK[level][variant % KICK[level].length] ?? SILENT
 }
 
 export function selectSnarePattern(level: EnergyLevel, variant: number): DrumPattern {
-    return SNARE[level][variant % SNARE[level].length]
+    return SNARE[level][variant % SNARE[level].length] ?? SILENT
 }
 
 export function selectHatPattern(level: EnergyLevel, variant: number): DrumPattern {
-    return HAT[level][variant % HAT[level].length]
+    return HAT[level][variant % HAT[level].length] ?? SILENT
 }
