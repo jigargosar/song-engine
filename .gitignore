@@ -28,3 +28,4 @@ tmp/
 
 # Generated reports
 scripts/audit-report.json
+scripts/audit-report.html

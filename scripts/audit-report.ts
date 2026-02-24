@@ -1,5 +1,6 @@
 import { Project, SyntaxKind, Node, SourceFile } from 'ts-morph'
-import { writeFileSync } from 'fs'
+import { readFileSync, writeFileSync } from 'fs'
+import { resolve } from 'path'
 
 const project = new Project({ tsConfigFilePath: 'tsconfig.json' })
 const srcFiles = project.getSourceFiles().filter((f) => !f.getFilePath().includes('node_modules'))
@@ -158,13 +159,24 @@ const report: AuditReport = {
     files: srcFiles.map(buildFileReport).sort((a, b) => b.totalInteractions - a.totalInteractions),
 }
 
-const outPath = 'scripts/audit-report.json'
-writeFileSync(outPath, JSON.stringify(report, null, 2))
-console.log(`Report written to ${outPath}`)
-console.log(`Files analyzed: ${report.files.length}`)
+// Write JSON
+const jsonPath = 'scripts/audit-report.json'
+writeFileSync(jsonPath, JSON.stringify(report, null, 2))
+
+// Generate self-contained HTML dashboard
+const templatePath = resolve('scripts/audit-dashboard.html')
+const template = readFileSync(templatePath, 'utf-8')
+const inlineScript = `<script>window.__AUDIT_DATA__ = ${JSON.stringify(report)};</script>`
+const htmlOutput = template.replace('<head>', `<head>\n${inlineScript}`)
+const htmlPath = 'scripts/audit-report.html'
+writeFileSync(htmlPath, htmlOutput)
+
+console.log(`JSON:  ${jsonPath}`)
+console.log(`HTML:  ${htmlPath} (self-contained, open directly)`)
+console.log(`Files: ${report.files.length}`)
 
 const totalInteractions = report.files.reduce((sum, f) => sum + f.totalInteractions, 0)
-console.log(`Total interactions: ${totalInteractions}`)
+console.log(`Interactions: ${totalInteractions}`)
 
 const highExport = report.files.filter((f) => f.exportRatio.ratio > 50)
-console.log(`Modules with >50% export ratio: ${highExport.length}`)
+console.log(`PLOP flags: ${highExport.length} modules with >50% export ratio`)

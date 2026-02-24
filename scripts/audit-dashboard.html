@@ -481,13 +481,17 @@
   const subtitle = document.getElementById('subtitle');
 
   let report;
-  try {
-    const res = await fetch('./audit-report.json');
-    if (!res.ok) throw new Error(`${res.status}`);
-    report = await res.json();
-  } catch(e) {
-    app.innerHTML = `<div class="error">Failed to load audit-report.json — run pnpm audit:report first</div>`;
-    return;
+  if (window.__AUDIT_DATA__) {
+    report = window.__AUDIT_DATA__;
+  } else {
+    try {
+      const res = await fetch('./audit-report.json');
+      if (!res.ok) throw new Error(`${res.status}`);
+      report = await res.json();
+    } catch(e) {
+      app.innerHTML = `<div class="error">Failed to load audit data — run pnpm audit:report first</div>`;
+      return;
+    }
   }
 
   const files = report.files;
