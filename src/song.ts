@@ -1,4 +1,4 @@
-import { Seed, createRng } from './rng'
+import { type Seed, createRng } from './rng'
 import { NoteName, ChordSymbol, noteToMidi, midiToNote, MidiNumber } from './note'
 import type { NoteEvent, PadEvent } from './note'
 import { generatePhrase } from './markov'
@@ -179,7 +179,7 @@ export function generateSong(seed: Seed): Song {
     const chordSymbols = rawChords.map(ChordSymbol)
     const phraseVoicings = voiceChords(rawChords, [])
 
-    const scaleNotes = Scale.get(tonic + ' minor').notes
+    const scaleNotes = Scale.get(`${tonic} minor`).notes
     const arpStyle = rng.pick(ARP_STYLES)
     const motifLen = rng.pick([4, 5, 6, 8] as const)
     const baseMotif = createMotif(rng, scaleNotes.length, motifLen)
