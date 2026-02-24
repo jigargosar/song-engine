@@ -13,7 +13,8 @@
         "lint:biome": "biome check src/",
         "audit:biome": "biome lint --rule=correctness/noUnusedVariables --rule=correctness/noUnusedImports src/",
         "audit:coupling": "tsx scripts/audit-coupling.ts",
-        "audit:tda": "tsx scripts/audit-tda.ts"
+        "audit:tda": "tsx scripts/audit-tda.ts",
+        "audit:report": "tsx scripts/audit-report.ts"
     },
     "devDependencies": {
         "@biomejs/biome": "^2.4.4",

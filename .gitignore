@@ -25,3 +25,6 @@ elm-stuff
 # Temp
 tmp/
 *.local.json
+
+# Generated reports
+scripts/audit-report.json
