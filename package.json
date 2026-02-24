@@ -8,18 +8,25 @@
         "build": "pnpm lint && vite build",
         "preview": "vite preview",
         "typecheck": "tsc --noEmit",
-        "lint": "pnpm typecheck && pnpm lint:biome",
+        "lint": "pnpm typecheck && pnpm lint:biome && pnpm lint:eslint",
+        "lint:eslint": "eslint src/",
         "lint:biome": "biome check src/",
-        "audit:biome": "biome lint --rule=correctness/noUnusedVariables --rule=correctness/noUnusedImports src/"
+        "audit:biome": "biome lint --rule=correctness/noUnusedVariables --rule=correctness/noUnusedImports src/",
+        "audit:coupling": "tsx scripts/audit-coupling.ts",
+        "audit:tda": "tsx scripts/audit-tda.ts"
     },
     "devDependencies": {
         "@biomejs/biome": "^2.4.4",
         "@tailwindcss/vite": "^4.2.1",
         "@types/seedrandom": "^3.0.8",
+        "@typescript-eslint/eslint-plugin": "^8.56.1",
+        "@typescript-eslint/parser": "^8.56.1",
         "@vitejs/plugin-basic-ssl": "^2.1.4",
+        "eslint": "^10.0.2",
         "prettier": "^3.8.1",
         "tailwindcss": "^4.2.1",
         "ts-morph": "^27.0.2",
+        "tsx": "^4.21.0",
         "typescript": "^5.9.3",
         "vite": "^7.3.1"
     },
