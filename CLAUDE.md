@@ -11,6 +11,7 @@ A browser-based procedural music generator. Given a numeric seed, `generateSong(
 ```bash
 pnpm dev              # Vite dev server
 pnpm build            # lint + vite build (production)
+pnpm preview          # serve production build locally
 pnpm lint             # tsc --noEmit + biome check + eslint
 pnpm typecheck        # tsc --noEmit only
 pnpm lint:biome       # biome check src/
@@ -21,6 +22,8 @@ pnpm audit:report     # Generate JSON audit report
 ```
 
 No test framework is configured. No CI pipeline exists.
+
+Audit scripts (`scripts/`) run via `tsx` (TypeScript Node execution) and use `ts-morph` for AST analysis. Formatting uses Prettier (no format script — run `pnpm prettier --write` manually). Biome formatter is disabled.
 
 ## Architecture
 
@@ -44,6 +47,29 @@ Four layers, strict dependency direction (lower layers never import higher):
 ### Pure/Impure Wall
 
 `generateSong()` returns a plain data object with all event timing pre-computed as absolute seconds. No audio objects, no DOM references. `startPlayback(song, callbacks)` is the sole bridge to Tone.js — all 17 synth nodes live in its closure scope.
+
+### Generation Pipeline
+
+`generateSong(seed)` follows a fixed pipeline — each step feeds the next:
+
+1. **Seed → RNG** — `createRng(seed)` gives a deterministic PRNG
+2. **RNG → Structure** — picks one of 5 song structures (section names, bar counts, energy targets) and one of 5 instrument orderings
+3. **RNG → Key + Chords** — picks tonic from minor key pool, generates 4-chord progression via Markov chain, finds closest voicings
+4. **Structure → Timing** — `buildBpmCurve()` and `buildBarTiming()` produce absolute bar start times and durations in seconds
+5. **Structure → Energy** — `buildEnergyCurve()` smooths section energy targets with noise, `computeVolumes()` maps energy to per-instrument volumes via sigmoid thresholds
+6. **Per-bar event generation** — for each bar: drum patterns selected by energy level, arp events by style/energy, melody from motif + rhythm pattern variation
+7. **Event deduplication** — removes simultaneous note-ons at identical pitches
+
+All events use absolute `Seconds` timestamps — no relative offsets or transport-based timing.
+
+### Song Data Contract
+
+`Song` (in `song.ts`) is the central interface bridging pure generation and impure playback. Key field groups:
+- **Identity**: `seed`, `tonic`, `structName`, `orderName`
+- **Harmony**: `phrase` (roman numerals), `chordSymbols`, `phraseVoicings` (voiced note arrays)
+- **Timing**: `barStartTimes`, `barDurations`, `totalTime` (all `Seconds`), `bpmCurve`, `energyCurve`
+- **Events**: `padEvents`, `bassEvents`, `kickEvents`, `snareEvents`, `hatEvents`, `arpEvents`, `melodyEvents`
+- **Structure**: `bars` (`BarData[]` with section name, chord, energy, volumes per bar), `totalBars`
 
 ### Key Patterns
 
